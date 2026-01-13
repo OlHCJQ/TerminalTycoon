@@ -265,6 +265,7 @@ void sortHand(vector<Card>& hand, int type = 0) {
 int selectCard(vector<Card>& hand) {
 	int selectedCard = 0;
 	char input;
+	vector<Card> selectedCards;
 
 	cout << "Use [A] left, [D] right, [P] play the selected card, [O] pass the turn." << endl;
 
@@ -292,6 +293,7 @@ int selectCard(vector<Card>& hand) {
 		}
 		else if (input == 'p')
 		{
+			//selectedCards.push_back(hand(selectedCard));
 			return selectedCard;
 		}
 		else if (input == 'o')
@@ -525,6 +527,8 @@ void playTycoon() {
 	string wildColor;
 	vector<Card> deck = createDeck();
 	vector<Card> discardPile;
+	vector<Card> tempHand;
+
 	//vector<Card> playerHand;
 	//vector<Card> opponentHand;
 	int iterator = 1;
@@ -566,7 +570,40 @@ void playTycoon() {
 				}
 			}
 			if (!canRespond) {
+
 				cardToPlay = selectCard(players[0].hand) + 1;
+				while (true) {
+
+
+					if ((cardToPlay == -1999) || (cardToPlay == -999)) {
+						break;
+					} 
+					
+
+					tempHand.push_back(players[0].hand[cardToPlay-1]);
+
+
+					cout << endl << "Your current play: " << endl;
+					for (auto cardss : tempHand)
+					{
+						displayCard(cardss);
+					}
+					cout << endl << endl;
+					cardToPlay = selectCard(players[0].hand) + 1;
+
+					while (players[0].hand[cardToPlay - 1].rank != tempHand[0].rank)
+					{
+						
+						cout << endl << endl << "Incorrectly chosen card! Select one that matches the other chosen card in rank! " << endl << endl;
+						cardToPlay = selectCard(players[0].hand) + 1;
+
+						if ((cardToPlay == -1999) || (cardToPlay == -999)) {
+							break;
+						}
+
+					}
+				}
+				
 			}
 			//else {
 			//	cout << "\nYou must play a card with the greater number last one or input 0 to pass " << potentialDraw << " cards!\n";
@@ -595,6 +632,12 @@ void playTycoon() {
 			else if (cardToPlay == -999) 
 			{ // slightly adjusted the execution to fit the new method. 
 				cout << players[0].Name << " passed this turn, keep over." << endl;
+				roundOver = true;
+			}
+			else if (cardToPlay == -1999) 
+			{ // slightly adjusted the execution to fit the new method. 
+				cout << endl << "Game prematureyl ended!" << endl;
+				gamePower = false;
 				roundOver = true;
 			}
 

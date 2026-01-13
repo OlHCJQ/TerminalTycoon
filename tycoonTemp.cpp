@@ -678,13 +678,10 @@ int main() {
 	SetConsoleOutputCP(CP_UTF8);
 	SetConsoleCP(CP_UTF8);
 
-	// Enable wide character output
 
 	// Output Unicode characters
 	//std::wcout << L"Español, Über, Crème brûlée, 你好, こんにちは" << std::endl;
 
-	//wcout << L"\nBasic suits:\n";
-	//wcout << L"♠ ♥ ♦ ♣\n";
 	
 	mainMenu();
 	return 0;

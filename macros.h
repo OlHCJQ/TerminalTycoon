@@ -37,7 +37,7 @@
 #define WHITE_TEXT   "\033[97m"
 #define BLACK_TEXT   "\033[90m"
 
-//Icons
+//Icons 
 #define SPADE_ICON '2660'
 #define CLUB_ICON '2665' 
 #define DIAMOND_ICON '2666'

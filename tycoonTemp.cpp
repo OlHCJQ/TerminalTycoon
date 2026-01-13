@@ -423,11 +423,9 @@ void specialCardLogic(Card playedCard,int& turnCount,vector<Player>& players,int
 
 
 
-void playerCardLogic(vector<Player>& players, string colors, Card& playedCard,
-	int& cardToPlay, int& turnCount, int& iterator,
-	int& potentialDraw, bool& canRespond, vector<Card>& deck,
-	vector<Card>& discardPile, string& wildColor, Card& lastPlayedCard,
-	int& nextPlayer) {
+void playerCardLogic(vector<Player>& players, string colors, Card& playedCard,int& cardToPlay, int& turnCount, int& iterator,int& potentialDraw, bool& canRespond, vector<Card>& deck,
+	vector<Card>& discardPile, string& wildColor, Card& lastPlayedCard,int& nextPlayer) 
+{
 	players[0].hand.erase(players[0].hand.begin() + (cardToPlay - 1));
 	playedCard.status = played;
 	if (playedCard.isSpecial) {
@@ -528,6 +526,7 @@ void playTycoon() {
 	vector<Card> deck = createDeck();
 	vector<Card> discardPile;
 	vector<Card> tempHand;
+	vector<int> tempPlaceCounter;
 
 	//vector<Card> playerHand;
 	//vector<Card> opponentHand;
@@ -581,6 +580,7 @@ void playTycoon() {
 					
 
 					tempHand.push_back(players[0].hand[cardToPlay-1]);
+					tempPlaceCounter.push_back(cardToPlay);
 
 
 					cout << endl << "Your current play: " << endl;

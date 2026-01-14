@@ -18,7 +18,7 @@ using namespace std;
 using namespace chrono_literals;
 string colors = "SHCD";
 vector<string> cardNames = {
-	"JOKER", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "NINE", "TEN", "JACK", "QUEEN", "KING", "ACE", "TWO","EIGHT"
+	"NEW TRICK","JOKER", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "NINE", "TEN", "JACK", "QUEEN", "KING", "ACE", "TWO","EIGHT"
 };
 
 
@@ -117,7 +117,7 @@ void initPlayers(vector<Player>& players, string playName, int numOpp = 2)
 
 void displayCard(Card card) {
 
-	switch (card.suit) { // Displays cards with colors in the terminal
+	switch (card.suit) { 
 	case(SPADE):
 		cout << BLACK_TEXT;
 		break;
@@ -144,9 +144,9 @@ vector<Card> createDeck() {
 	for (char s : suits) {
 
 		// Deal two of each rank for each color
-		for (int i = 2; i <= 13; i++)
+		for (int i = 3; i <= 14; i++)
 		{
-			if ((i != 13) && (i != 14))
+			if ((i != 14) && (i != 15))
 			{
 				deck.push_back(Card(i, s, notWild, notSpecial, notPlayed));
 
@@ -154,13 +154,13 @@ vector<Card> createDeck() {
 			}
 		}
 		// The two and 8 are here
-		deck.push_back(Card(13, s, notWild, special, notPlayed));
 		deck.push_back(Card(14, s, notWild, special, notPlayed));
+		deck.push_back(Card(15, s, notWild, special, notPlayed));
 
 	}
 	// Two Joers
-	deck.push_back(Card(1, 'j', wild, special, notPlayed));
-	deck.push_back(Card(1, 'j', wild, special, notPlayed));
+	deck.push_back(Card(2, 'j', wild, special, notPlayed));
+	deck.push_back(Card(2, 'j', wild, special, notPlayed));
 	//string temp;
 	//for (Card s : deck) 
 	//{
@@ -262,13 +262,17 @@ void sortHand(vector<Card>& hand, int type = 0) {
 
 }
 
-int selectCard(vector<Card>& hand) {
+int selectCard(vector<Card>& hand, bool firstTry) {
 	int selectedCard = 0;
 	char input;
 	vector<Card> selectedCards;
 
-	cout << "Use [A] left, [D] right, [P] play the selected card, [O] pass the turn." << endl;
-
+	if (firstTry) {
+		cout << "Use [A] left, [D] right, [P] to add selected card to your play, [O] pass the turn, ." << endl;
+	}
+	else {
+		cout << "Use [A] left, [D] right, [P] to add selected card to your play, [S] to submit hand." << endl;
+	}
 	while (true) {
 		cout << CLEAR_LINE;
 
@@ -296,13 +300,19 @@ int selectCard(vector<Card>& hand) {
 			//selectedCards.push_back(hand(selectedCard));
 			return selectedCard;
 		}
-		else if (input == 'o')
+		else if ((input == 'o') && firstTry)
 		{
+			cout << endl << "Passed!" << endl;
 			return -1000;
 		}
 		else if (input == 'x')
 		{
 			return -2000;
+		}
+		else if ((input == 's') && !firstTry)
+		{
+			cout << endl << "Submitted!" << endl;
+			return -3000;
 		}
 	}
 }
@@ -503,14 +513,37 @@ void cpuTurn(int currentPlayer, Card& lastPlayedCard, vector<Player>& players,ve
 
 	if (!playedd) 
 	{
-		// No card to play, CPU passes
 		cout << cpu.Name << " has no valid card to play and passes the turn." << endl;
 	}
 
 	this_thread::sleep_for(DELAY);
 }
 
+bool isValidSet(const vector<Card>& set, const Card& lastPlayedCard)
+{
+	if (set.empty())
+	{
+		return false;
+	}
+	int r = set[0].rank;
+	for (const Card& c : set) {
+		if (c.rank != r) {
+			return false;
+		}
+					
+	}
+		
 
+	return r > lastPlayedCard.rank;
+}
+
+struct Play {
+    int rank;
+    int count;  
+	int num;
+	string name;
+    bool isClear;
+};
 
 void playTycoon() {
 	//Commented out some of the variables that are no longer useful
@@ -525,134 +558,149 @@ void playTycoon() {
 	string wildColor;
 	vector<Card> deck = createDeck();
 	vector<Card> discardPile;
+
 	vector<Card> tempHand;
 	vector<int> tempPlaceCounter;
+	Play CurrentPlay;
+	CurrentPlay.count = 0;
+	CurrentPlay.num = 0;
+	
 
-	//vector<Card> playerHand;
-	//vector<Card> opponentHand;
-	int iterator = 1;
+	//Need to remove
 	bool canRespond = false;
 	string playerName;
 	int playerCount = 0;
 	vector<Player> players;
 	int turnCount = players.size() * 50;
-	int nextPlayer = 0;
 	int currentPlayer = 0;
 	Card lastPlayedCard = initRound(playerName, playerCount, players, deck, discardPile, potentialDraw);
 	int round = 1;
 	while (gamePower) {
 		
 		currentPlayer = turnCount % players.size();
-		nextPlayer = (turnCount + iterator) % players.size();
 		if (turnCount % players.size() == 0 && !botMode) {
+
+			cout << "| CURRENT TRICK SIZE |" << endl;
+			if (CurrentPlay.num == 0) {
+				cout << "None! Set the pace!" << endl;
+			}
+			else {
+				cout << CurrentPlay.name << " has set the current trick size of " << CurrentPlay.num << endl;
+			}
+
 			cout << "| CURRENT HAND SIZES |" << endl;
 			for (auto player : players) {
 				cout << player.Name << ": " << player.hand.size() << endl;
 			}
-			topDiscardInfo(lastPlayedCard, potentialDraw, canRespond);
+			
+			if (CurrentPlay.count == players.size()-1) {
+				cout << endl << "You win the trick! Play again!";
+				CurrentPlay.count = 0;
+				CurrentPlay.rank = -1;
+				CurrentPlay.num = 0;
 
-			sortHand(players[0].hand);
-
-			cout << endl << "Your hand: " << endl;
-			if (devMode) 
-			{
-				for (auto player : players) 
-				{
-					if (player.isCPU) 
-					{
-						cout << "\nHand of " << player.Name << " (devMode on)\n";
-						for (auto cards : player.hand) 
-						{
-							displayCard(cards);
-						}
-					}
-				}
+				lastPlayedCard = Card(1, SPADE, notWild, notSpecial, notPlayed);
 			}
+			topDiscardInfo(lastPlayedCard, potentialDraw, canRespond);
+		
+			sortHand(players[0].hand);
+		
+			cout << endl << "Your hand: " << endl;
+
+			
+			
+			tempHand.clear();
+			tempPlaceCounter.clear();
 			if (!canRespond) {
 
-				cardToPlay = selectCard(players[0].hand) + 1;
+				cardToPlay = selectCard(players[0].hand, 1) + 1;
 				while (true) {
-
 
 					if ((cardToPlay == -1999) || (cardToPlay == -999)) {
 						break;
-					} 
+					}
+
+					if (find(tempPlaceCounter.begin(), tempPlaceCounter.end(), cardToPlay - 1) != tempPlaceCounter.end()) {
+						cout << "\nYou already selected that card!\n";
+
+						continue;
+					}
+					else {
+						tempHand.push_back(players[0].hand[cardToPlay - 1]);
+						tempPlaceCounter.push_back(cardToPlay - 1);
+					}
 					
-
-					tempHand.push_back(players[0].hand[cardToPlay-1]);
-					tempPlaceCounter.push_back(cardToPlay);
-
-
 					cout << endl << "Your current play: " << endl;
-					for (auto cardss : tempHand)
-					{
+					for (auto cardss : tempHand) {
 						displayCard(cardss);
 					}
 					cout << endl << endl;
-					cardToPlay = selectCard(players[0].hand) + 1;
 
-					while (players[0].hand[cardToPlay - 1].rank != tempHand[0].rank)
-					{
-						
-						cout << endl << endl << "Incorrectly chosen card! Select one that matches the other chosen card in rank! " << endl << endl;
-						cardToPlay = selectCard(players[0].hand) + 1;
+					cardToPlay = selectCard(players[0].hand, 0) + 1;
 
-						if ((cardToPlay == -1999) || (cardToPlay == -999)) {
+					if ((cardToPlay == -1999) || (cardToPlay == -999) || (cardToPlay == -2999)) {
+						break;
+					}
+
+					while (players[0].hand[cardToPlay - 1].rank != tempHand[0].rank) {
+						cout << "\nIncorrectly chosen card! Must match rank!\n";
+						cardToPlay = selectCard(players[0].hand, 0) + 1;
+
+						if ((cardToPlay == -1999) || (cardToPlay == -999) || (cardToPlay == -2999)) {
 							break;
 						}
-
+						
 					}
 				}
-				
 			}
-			//else {
-			//	cout << "\nYou must play a card with the greater number last one or input 0 to pass " << potentialDraw << " cards!\n";
-			//	cin >> cardToPlay;
-			//}
+			if (!tempHand.empty()) {
 
-			if (canRespond && cardToPlay > 0) {
-				Card playedCard = players[0].hand[cardToPlay - 1];
-				if (playedCard.rank == lastPlayedCard.rank) {
-					canRespond = false;
-				}
-			}
-			if (cardToPlay > 0 && cardToPlay <= players[0].hand.size() && !canRespond) 
-			{
-				Card playedCard = players[0].hand[cardToPlay - 1];
-				if (isValidCard(playedCard, lastPlayedCard)) {
-					clearScreen();
-					playerCardLogic(players, colors, playedCard, cardToPlay, turnCount, iterator, potentialDraw, canRespond, deck, discardPile, wildColor, lastPlayedCard, nextPlayer); // 
-				}
-				else 
-				{
-					cout << "Invalid play! Select another card or draw to pass your turn." << endl;
+				if (!isValidSet(tempHand, lastPlayedCard)) {
+					cout << "Invalid set played!" << endl;
 					continue;
 				}
+
+				for (int i = tempHand.size() - 1; i >= 0; i--) {
+					for (int j = 0; j < players[0].hand.size(); j++) {
+						if (players[0].hand[j].rank == tempHand[i].rank) {
+							players[0].hand.erase(players[0].hand.begin() + j);
+							break;
+						}
+					}
+				}
+
+				for (Card& c : tempHand) {
+					c.status = played;
+					discardPile.push_back(c);
+				}
+
+				lastPlayedCard = tempHand[0];
+				CurrentPlay.rank = tempHand[0].rank;
+				CurrentPlay.num = tempHand.size();
+				CurrentPlay.name = players[turnCount % players.size()].Name;
+
+				clearScreen();
+				roundOver = false;
+				turnCount ++;
+				continue;
 			}
-			else if (cardToPlay == -999) 
-			{ // slightly adjusted the execution to fit the new method. 
+			
+			if (cardToPlay == -999) 
+			{ 
 				cout << players[0].Name << " passed this turn, keep over." << endl;
 				roundOver = true;
 			}
 			else if (cardToPlay == -1999) 
-			{ // slightly adjusted the execution to fit the new method. 
+			{ 
 				cout << endl << "Game prematureyl ended!" << endl;
 				gamePower = false;
 				roundOver = true;
 			}
-
-			else 
-			{
-				if (canRespond) 
-				{
-					cout << "\nInvalid play!\nYou must play a card with the same draw effect as the one just played or input 0 to draw " << potentialDraw << "cards!\n";
-				}
-				else 
-				{
-					cout << "\nInvalid play!\n";
-				}
-				continue;
+			else if (cardToPlay == -2999) {
+				cout << players[0].Name << " played their hand this turn." << endl;
+				roundOver = true;
 			}
+
 		}
 		else
 		{
@@ -664,16 +712,22 @@ void playTycoon() {
 			//}
 			cout << endl;
 			this_thread::sleep_for(DELAY);
-			cpuTurn(currentPlayer, lastPlayedCard, players, deck, discardPile, turnCount);
+			//cpuTurn(currentPlayer, lastPlayedCard, players, deck, discardPile, turnCount);
 			cout << endl;
 			if (botMode) round++;
+			
 		}
 
 		if (roundOver == true) {
 			highestOfRound = 0;
 			roundOver == false;
 		}
-		turnCount += iterator;
+		CurrentPlay.count++;
+		cout << endl << "Current play is: " << to_string(CurrentPlay.count) << endl;
+		cout << CurrentPlay.name << " set the current trick size to " << CurrentPlay.num << endl;
+
+
+		turnCount ++;
 		checkWin(players[currentPlayer], gamePower);
 	}
 }
@@ -702,7 +756,7 @@ void mainMenu() {
 		case(DEV_MODE):
 			//clearScreen();
 			cout << "Game starting in dev mode..." << endl;
-			devMode = true;
+			//devMode = true;
 			//playUno();
 			programPower = powerOff;
 			break;
